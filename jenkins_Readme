@@ -1,0 +1,228 @@
+
+
+## 🧠 What Jenkins Actually Is
+
+Jenkins is an **open-source CI/CD automation server**.
+It connects your code (from GitHub) → runs your build/test/deploy pipelines automatically → and sends results to your team.
+
+It’s the “traffic controller” for DevOps automation.
+
+---
+
+## ⚙️ Jenkins Architecture (Simple Diagram)
+
+```
+        ┌────────────────────────────┐
+        │        Developer (You)     │
+        │   git push to GitHub repo  │
+        └──────────────┬─────────────┘
+                       │ Webhook
+                       ▼
+        ┌────────────────────────────┐
+        │     Jenkins Master (Main)  │
+        │  - UI / Dashboard          │
+        │  - Job Scheduler           │
+        │  - Pipeline Executor       │
+        └──────────────┬─────────────┘
+                       │
+          ┌────────────┴────────────┐
+          │                         │
+┌────────────────────┐    ┌────────────────────┐
+│ Jenkins Agent Node │    │ Jenkins Agent Node │
+│  - Terraform Job   │    │  - Ansible Job     │
+│  - Docker Build    │    │  - Testing Jobs    │
+└────────────────────┘    └────────────────────┘
+```
+
+### 💬 In simple terms
+
+* **Master (Controller)** → handles job scheduling, plugin management, UI
+* **Agent (Worker Node)** → runs the heavy tasks like Terraform, Ansible, Docker builds
+* **Executor** → each agent has “slots” for concurrent jobs
+
+---
+
+## 🧩 Jenkins Home Directory
+
+| Location                       | Description                                    |
+| ------------------------------ | ---------------------------------------------- |
+| `/var/lib/jenkins`             | Main Jenkins home (configs, job data, plugins) |
+| `/var/lib/jenkins/jobs`        | Folder for each pipeline job                   |
+| `/var/lib/jenkins/workspace`   | Where job files are cloned & executed          |
+| `/var/lib/jenkins/plugins`     | All installed plugins                          |
+| `/var/log/jenkins/jenkins.log` | Main log file                                  |
+
+---
+
+## 🔌 Common Plugins You’ll Use (must know for interview)
+
+| Plugin                     | Purpose                      |
+| -------------------------- | ---------------------------- |
+| **Git Plugin**             | Connect Jenkins with GitHub  |
+| **Pipeline Plugin**        | Enables Jenkinsfile pipeline |
+| **Terraform Plugin**       | Terraform CLI integration    |
+| **Ansible Plugin**         | Run Ansible playbooks        |
+| **Credentials Binding**    | Store AWS/SSH keys securely  |
+| **Email / Slack Notifier** | Send pipeline results        |
+| **AWS CLI Plugin**         | Optional, for AWS commands   |
+
+---
+
+## 🧭 Workflow Example (Terraform Job)
+
+1️⃣ Developer pushes code to GitHub
+2️⃣ Jenkins (connected to repo) triggers a build via webhook
+3️⃣ Jenkins pulls latest code (`checkout scm`)
+4️⃣ Runs pipeline stages:
+
+* `terraform init`
+* `terraform plan`
+* `terraform apply`
+  5️⃣ Uploads logs / plan files as artifacts
+  6️⃣ Cleans workspace automatically
+
+---
+
+✅ **End of Module 1 Summary**
+
+You now know:
+
+* How Jenkins is structured (Master + Agent)
+* What happens behind the scenes when you trigger a pipeline
+* Where your jobs, logs, and configurations live
+* Which plugins matter for DevOps + Terraform automation
+
+---
+
+
+
+---
+
+
+### **1️⃣ GitHub Integration (Code Source)**
+
+✅ What to know:
+
+* Configure Git plugin
+* Add **GitHub credentials** (Personal Access Token)
+* Add your **GitHub repo URL** in Jenkins job
+* Enable **webhook** so that every Git push triggers a pipeline automatically
+  *(Git → Jenkins → Terraform → AWS)*
+
+---
+
+### **2️⃣ Pipeline Creation**
+
+✅ What to know:
+
+* Jenkinsfile syntax (Declarative pipeline)
+* Key blocks:
+
+  ```groovy
+  pipeline {
+    agent any
+    stages {
+      stage('Init') { steps { sh 'terraform init' } }
+      stage('Plan') { steps { sh 'terraform plan' } }
+      stage('Apply') { steps { sh 'terraform apply -auto-approve' } }
+    }
+  }
+  ```
+* Use `checkout scm` to pull code automatically from Git
+* Add approval stage (`input` block) before apply
+
+---
+
+### **3️⃣ Jenkins Credentials Management**
+
+✅ What to know:
+
+* How to add AWS credentials in:
+
+  ```
+  Jenkins → Manage Jenkins → Credentials → Global
+  ```
+* Use inside pipeline:
+
+  ```groovy
+  environment {
+      AWS_ACCESS_KEY_ID     = credentials('aws-key-id')
+      AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+  }
+  ```
+* Never hardcode keys or tokens
+
+---
+
+### **4️⃣ Parameterized Builds (Optional but Common at Rakuten)**
+
+✅ What to know:
+
+* Add environment parameters (e.g., dev/stg/prod)
+* Example:
+
+  ```groovy
+  parameters {
+      choice(name: 'ENV', choices: ['dev', 'prod'])
+  }
+  ```
+* Use:
+
+  ```groovy
+  sh "terraform workspace select ${params.ENV}"
+  ```
+
+---
+
+### **5️⃣ Jenkinsfile + Terraform Validation**
+
+✅ What to know:
+
+* Run validation steps before apply:
+
+  ```groovy
+  stage('Validate') { steps { sh 'terraform validate' } }
+  stage('Fmt') { steps { sh 'terraform fmt -check' } }
+  ```
+* Ensures no syntax or formatting errors in pipeline runs
+
+---
+
+### **6️⃣ Jenkins Pipeline Triggers**
+
+✅ What to know:
+
+* Manual build (click “Build Now”)
+* Auto build (Git webhook)
+* Scheduled build (CRON)
+
+  ```
+  triggers { cron('H/30 * * * *') }   // every 30 mins
+  ```
+
+---
+
+### **7️⃣ Workspace & Logs**
+
+✅ What to know:
+
+* Workspace: `/var/lib/jenkins/workspace/<job-name>`
+* Check console output for Terraform stages
+* Clean workspace after build:
+
+  ```groovy
+  post {
+    always { cleanWs() }
+  }
+  ```
+
+---
+
+✅ **With these 7 topics**, you’ll cover everything Rakuten expects for:
+
+* Terraform deployment pipelines
+* AWS automation
+* CI/CD reliability and best practices
+
+---
+
