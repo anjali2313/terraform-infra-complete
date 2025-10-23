@@ -12,6 +12,10 @@ output "target_group_arn" {
   value       = aws_lb_target_group.this.arn
   description = "Target Group ARN for EC2 instances"
 }
+output "dns_name" {
+  description = "DNS name of the ALB"
+  value       = aws_lb.app_alb.dns_name
+}
 
 
 #✅ What This Module Does
