@@ -24,13 +24,16 @@ resource "aws_security_group" "alb_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = { Name = "ALB-SG" }
+  tags = {
+    Name      = "ALB-SG"
+    ManagedBy = "Terraform"
+  }
 }
 
 ##########################
 # 2️⃣  Application Load Balancer
 ##########################
-resource "aws_lb" "this" {
+resource "aws_lb" "app_alb" {
   name               = "demo-alb"
   internal           = false
   load_balancer_type = "application"
@@ -48,7 +51,7 @@ resource "aws_lb" "this" {
 ##########################
 # 3️⃣  Target Group
 ##########################
-resource "aws_lb_target_group" "this" {
+resource "aws_lb_target_group" "app_tg" {
   name     = "demo-tg"
   port     = 80
   protocol = "HTTP"
@@ -63,19 +66,22 @@ resource "aws_lb_target_group" "this" {
     matcher             = "200-399"
   }
 
-  tags = { Name = "DemoTG" }
+  tags = {
+    Name      = "DemoTG"
+    ManagedBy = "Terraform"
+  }
 }
 
 ##########################
 # 4️⃣  Listener
 ##########################
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = aws_lb.app_alb.arn
   port              = 80
   protocol          = "HTTP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.app_tg.arn
   }
 }

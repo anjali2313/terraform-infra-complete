@@ -1,9 +1,9 @@
 variable "vpc_id" {
-  description = "VPC ID for the ALB"
+  description = "VPC ID where the ALB is deployed"
   type        = string
 }
 
 variable "public_subnet_id" {
-  description = "Public subnet ID where the ALB will be placed"
+  description = "Public subnet ID for the ALB"
   type        = string
 }
