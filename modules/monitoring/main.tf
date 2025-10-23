@@ -14,8 +14,8 @@
 resource "aws_sns_topic" "alerts" {
   name = "infra-alerts-topic"
   tags = {
-    Name       = "InfraAlertsTopic"
-    ManagedBy  = "Terraform"
+    Name      = "InfraAlertsTopic"
+    ManagedBy = "Terraform"
   }
 }
 
@@ -48,8 +48,8 @@ resource "aws_cloudwatch_metric_alarm" "asg_cpu_alarm" {
   }
 
   tags = {
-    Name       = "ASG-CPU-Alarm"
-    ManagedBy  = "Terraform"
+    Name      = "ASG-CPU-Alarm"
+    ManagedBy = "Terraform"
   }
 }
 
@@ -76,8 +76,8 @@ resource "aws_cloudwatch_metric_alarm" "ec2_cpu_alarm" {
   }
 
   tags = {
-    Name       = "EC2-CPU-Alarm"
-    ManagedBy  = "Terraform"
+    Name      = "EC2-CPU-Alarm"
+    ManagedBy = "Terraform"
   }
 }
 

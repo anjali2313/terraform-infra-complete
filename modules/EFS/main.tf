@@ -37,8 +37,8 @@ resource "aws_efs_file_system" "this" {
   }
 
   tags = {
-    Name       = var.efs_name
-    ManagedBy  = "Terraform"
+    Name      = var.efs_name
+    ManagedBy = "Terraform"
   }
 }
 

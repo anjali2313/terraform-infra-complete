@@ -26,14 +26,14 @@ resource "aws_subnet" "public" {
   cidr_block              = var.public_subnet_cidr
   map_public_ip_on_launch = true
   availability_zone       = var.availability_zone
-  tags = { Name = "${var.vpc_name}-public" }
+  tags                    = { Name = "${var.vpc_name}-public" }
 }
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.this.id
   cidr_block        = var.private_subnet_cidr
   availability_zone = var.availability_zone
-  tags = { Name = "${var.vpc_name}-private" }
+  tags              = { Name = "${var.vpc_name}-private" }
 }
 
 ##########################

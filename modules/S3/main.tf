@@ -15,8 +15,8 @@ resource "aws_s3_bucket" "this" {
   force_destroy = true
 
   tags = {
-    Name       = var.bucket_name
-    ManagedBy  = "Terraform"
+    Name      = var.bucket_name
+    ManagedBy = "Terraform"
   }
 }
 

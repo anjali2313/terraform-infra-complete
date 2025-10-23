@@ -5,8 +5,8 @@ module "network" {
 }
 
 module "s3" {
-  source       = "./modules/s3"
-  bucket_name  = "anjali-project-demo-bucket-2025"
+  source      = "./modules/s3"
+  bucket_name = "anjali-project-demo-bucket-2025"
 }
 
 module "iam" {
@@ -24,9 +24,9 @@ module "ec2" {
 }
 
 module "alb" {
-  source            = "./modules/alb"
-  vpc_id            = module.network.vpc_id
-  public_subnet_id  = module.network.public_subnet_id
+  source           = "./modules/alb"
+  vpc_id           = module.network.vpc_id
+  public_subnet_id = module.network.public_subnet_id
 }
 
 # ✅ Add this right after ALB

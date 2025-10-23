@@ -2,10 +2,10 @@
 # 1️⃣  Launch Template
 ##########################
 resource "aws_launch_template" "this" {
-  name_prefix   = "demo-lt-"
-  image_id      = var.ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_name
+  name_prefix            = "demo-lt-"
+  image_id               = var.ami_id
+  instance_type          = var.instance_type
+  key_name               = var.key_name
   vpc_security_group_ids = [var.app_sg_id]
 
   iam_instance_profile {
@@ -39,13 +39,13 @@ resource "aws_launch_template" "this" {
 # 2️⃣  Auto Scaling Group
 ##########################
 resource "aws_autoscaling_group" "this" {
-  name                      = "demo-asg"
-  vpc_zone_identifier       = [var.subnet_id]
-  desired_capacity          = 1
-  min_size                  = 1
-  max_size                  = 3
-  health_check_type         = "ELB"
-  target_group_arns         = [var.target_group_arn]
+  name                = "demo-asg"
+  vpc_zone_identifier = [var.subnet_id]
+  desired_capacity    = 1
+  min_size            = 1
+  max_size            = 3
+  health_check_type   = "ELB"
+  target_group_arns   = [var.target_group_arn]
 
   launch_template {
     id      = aws_launch_template.this.id

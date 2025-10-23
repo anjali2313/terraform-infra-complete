@@ -12,8 +12,8 @@ resource "aws_ebs_volume" "this" {
   type              = var.type
 
   tags = {
-    Name       = var.volume_name
-    ManagedBy  = "Terraform"
+    Name      = var.volume_name
+    ManagedBy = "Terraform"
   }
 }
 
@@ -21,9 +21,9 @@ resource "aws_ebs_volume" "this" {
 # 2️⃣  Attach EBS to EC2
 ##########################
 resource "aws_volume_attachment" "this" {
-  device_name = var.device_name
-  volume_id   = aws_ebs_volume.this.id
-  instance_id = var.instance_id
+  device_name  = var.device_name
+  volume_id    = aws_ebs_volume.this.id
+  instance_id  = var.instance_id
   force_detach = true
 }
 
@@ -35,8 +35,8 @@ resource "aws_ebs_snapshot" "backup" {
   description = "Automated snapshot of ${var.volume_name}"
 
   tags = {
-    Name       = "${var.volume_name}-snapshot"
-    CreatedBy  = "Terraform"
+    Name      = "${var.volume_name}-snapshot"
+    CreatedBy = "Terraform"
   }
 
   depends_on = [aws_volume_attachment.this]
