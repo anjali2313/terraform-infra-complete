@@ -1,5 +1,13 @@
 #Stores shared configuration.
 
+############################################################
+# Environment Variable (Required by Jenkins pipeline)
+############################################################
+variable "environment" {
+  description = "Environment name like dev, stage, or prod"
+  type        = string
+  default     = "dev"
+}
 
 variable "region" {
   description = "AWS region"
