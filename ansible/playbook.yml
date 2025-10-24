@@ -1,0 +1,10 @@
+---
+- name: Configure storage node for Rakuten-like setup
+  hosts: storage_nodes
+  become: yes
+  vars:
+    efs_dns_name: fs-xxxxxx.efs.ap-northeast-1.amazonaws.com  # replace with your EFS DNS
+    mount_point: /mnt/data
+    s3_bucket: anjali-storage-backup                           # replace with your bucket
+  roles:
+    - storage

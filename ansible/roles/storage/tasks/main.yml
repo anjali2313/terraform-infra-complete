@@ -1,0 +1,36 @@
+---
+- name: Install NFS utilities
+  yum:
+    name: nfs-utils
+    state: present
+
+- name: Install AWS CLI (for S3 sync)
+  yum:
+    name: awscli
+    state: present
+
+- name: Create mount directory
+  file:
+    path: "{{ mount_point }}"
+    state: directory
+    mode: '0755'
+
+- name: Mount EFS
+  mount:
+    path: "{{ mount_point }}"
+    src: "{{ efs_dns_name }}:/"
+    fstype: nfs4
+    state: mounted
+
+- name: Create uploads directory
+  file:
+    path: "{{ mount_point }}/uploads"
+    state: directory
+    mode: '0775'
+
+- name: Schedule daily backup to S3
+  cron:
+    name: "Daily backup to S3"
+    minute: "0"
+    hour: "1"
+    job: "aws s3 sync {{ mount_point }}/uploads s3://{{ s3_bucket }}"
