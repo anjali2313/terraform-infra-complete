@@ -2,7 +2,7 @@ pipeline {
     agent any
     options {
         timestamps()
-        ansiColor('xterm')
+        // Removed ansiColor('xterm') since plugin not installed
     }
 
     environment {
