@@ -44,15 +44,17 @@ resource "aws_autoscaling_group" "this" {
   desired_capacity    = 1
   min_size            = 1
   max_size            = 3
-  health_check_type   = "ELB"
-  target_group_arns   = [var.target_group_arn]
+  health_check_type   = "EC2"
+
+  # Temporarily disable ALB integration (will re-enable later)
+  # target_group_arns   = [var.target_group_arn]
 
   launch_template {
     id      = aws_launch_template.this.id
     version = "$Latest"
   }
 
-  # ✅ Tags must be in 'tag {}' blocks for ASG (not 'tags = {}')
+  # ✅ Use tag blocks, not map
   tag {
     key                 = "Name"
     value               = "Demo-ASG-Instance"
@@ -87,11 +89,3 @@ resource "aws_autoscaling_policy" "cpu_target" {
 
   depends_on = [aws_autoscaling_group.this]
 }
-
-
-
-#it will automatically:
-#✅ Create the launch template
-#✅ Spin up an Auto Scaling Group (1–3 instances)
-#✅ Register with your ALB target group
-#✅ Add a CPU utilization scaling policy
