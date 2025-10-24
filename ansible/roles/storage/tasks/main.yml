@@ -15,12 +15,18 @@
     state: directory
     mode: '0755'
 
-- name: Mount EFS
-  mount:
-    path: "{{ mount_point }}"
-    src: "{{ efs_dns_name }}:/"
-    fstype: nfs4
-    state: mounted
+# 🟡 Skip EFS mount temporarily (no EFS created yet)
+- name: Skip EFS mount temporarily
+  debug:
+    msg: "EFS mount skipped — EFS not yet provisioned via Terraform"
+
+# Uncomment this block later once EFS is added
+# - name: Mount EFS
+#   mount:
+#     path: "{{ mount_point }}"
+#     src: "{{ efs_dns_name }}:/"
+#     fstype: nfs4
+#     state: mounted
 
 - name: Create uploads directory
   file:
