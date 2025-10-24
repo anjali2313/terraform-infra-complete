@@ -9,6 +9,11 @@
     name: awscli
     state: present
 
+- name: Install cronie (for cron scheduling)
+  yum:
+    name: cronie
+    state: present
+
 - name: Create mount directory
   file:
     path: "{{ mount_point }}"
@@ -19,14 +24,6 @@
 - name: Skip EFS mount temporarily
   debug:
     msg: "EFS mount skipped — EFS not yet provisioned via Terraform"
-
-# Uncomment this block later once EFS is added
-# - name: Mount EFS
-#   mount:
-#     path: "{{ mount_point }}"
-#     src: "{{ efs_dns_name }}:/"
-#     fstype: nfs4
-#     state: mounted
 
 - name: Create uploads directory
   file:
