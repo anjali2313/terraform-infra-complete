@@ -10,13 +10,6 @@ resource "aws_s3_bucket" "this" {
   bucket        = var.bucket_name
   force_destroy = true
 
-  # ✅ Modern ownership enforcement (disables ACLs automatically)
-  ownership_controls {
-    rule {
-      object_ownership = "BucketOwnerEnforced"
-    }
-  }
-
   tags = {
     Name      = var.bucket_name
     ManagedBy = "Terraform"
@@ -24,7 +17,18 @@ resource "aws_s3_bucket" "this" {
 }
 
 ##########################
-# 2️⃣  Versioning
+# 2️⃣  Ownership Controls (separate resource)
+##########################
+resource "aws_s3_bucket_ownership_controls" "this" {
+  bucket = aws_s3_bucket.this.id
+
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+##########################
+# 3️⃣  Versioning
 ##########################
 resource "aws_s3_bucket_versioning" "this" {
   bucket = aws_s3_bucket.this.id
@@ -35,7 +39,7 @@ resource "aws_s3_bucket_versioning" "this" {
 }
 
 ##########################
-# 3️⃣  Encryption
+# 4️⃣  Encryption
 ##########################
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
@@ -48,7 +52,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
 }
 
 ##########################
-# 4️⃣  🔒 Block All Public Access
+# 5️⃣  Block Public Access
 ##########################
 resource "aws_s3_bucket_public_access_block" "this" {
   bucket                  = aws_s3_bucket.this.id
@@ -57,10 +61,3 @@ resource "aws_s3_bucket_public_access_block" "this" {
   ignore_public_acls       = true
   restrict_public_buckets  = true
 }
-
-# 🧹 Removed: aws_s3_bucket_acl (no longer supported under BucketOwnerEnforced)
-# Old code:
-# resource "aws_s3_bucket_acl" "this" {
-#   bucket = aws_s3_bucket.this.id
-#   acl    = "private"
-# }
