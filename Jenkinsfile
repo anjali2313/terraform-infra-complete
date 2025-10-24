@@ -9,40 +9,34 @@
 pipeline {
     agent any
 
-    // ---------- Pipeline Options ----------
     options {
         timestamps() // adds timestamps to logs for better tracing
-        // ansiColor('xterm') // optional: enable if plugin installed
+        // ansiColor('xterm') // enable if plugin installed
     }
 
-    // ---------- Environment Variables ----------
     environment {
         AWS_ACCESS_KEY_ID     = credentials('new-id')      // Jenkins credential ID
         AWS_SECRET_ACCESS_KEY = credentials('sec-key')     // Jenkins credential secret
         AWS_DEFAULT_REGION    = 'ap-northeast-1'           // AWS region
-        BACKEND_BUCKET        = 'anjali-tfstate-backend-2025' // S3 backend bucket
-        BACKEND_TABLE         = 'terraform-locks'          // DynamoDB lock table
+        BACKEND_BUCKET        = 'anjali-tfstate-backend-2025'
+        BACKEND_TABLE         = 'terraform-locks'
     }
 
-    // ---------- Build Parameters ----------
     parameters {
         choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Select Terraform action')
         choice(name: 'ENV', choices: ['dev', 'prod'], description: 'Select environment')
     }
 
-    // ---------- Pipeline Stages ----------
     stages {
 
-        // 1️⃣ Checkout Code
         stage('Checkout Code') {
             steps {
                 echo "📦 Checking out repository..."
-                cleanWs()             // clean workspace
-                checkout scm          // fetch repo from GitHub
+                cleanWs()
+                checkout scm
             }
         }
 
-        // 2️⃣ Prepare Backend (S3 + DynamoDB)
         stage('Prepare Backend') {
             steps {
                 echo "☁️ Checking and creating backend if missing..."
@@ -71,7 +65,6 @@ pipeline {
             }
         }
 
-        // 3️⃣ Initialize Terraform
         stage('Init Terraform') {
             steps {
                 echo "🚀 Initializing Terraform backend and modules..."
@@ -79,7 +72,6 @@ pipeline {
             }
         }
 
-        // 4️⃣ Validate Terraform
         stage('Validate Terraform') {
             steps {
                 echo "🔍 Validating Terraform configuration..."
@@ -88,7 +80,6 @@ pipeline {
             }
         }
 
-        // 5️⃣ Terraform Plan
         stage('Terraform Plan') {
             when { expression { params.ACTION == 'plan' } }
             steps {
@@ -97,32 +88,31 @@ pipeline {
             }
         }
 
-        // 6️⃣ Terraform Apply
         stage('Terraform Apply') {
             when { expression { params.ACTION == 'apply' } }
             steps {
                 input message: "⚠️ Approve APPLY for ${params.ENV} environment?"
-                echo "🚀 Applying Terraform changes..."
+                echo "🚀 Creating plan and applying changes..."
+                // create a fresh plan so apply never fails
+                sh "terraform plan -var 'environment=${params.ENV}' -out=tfplan"
                 sh "terraform apply -auto-approve tfplan"
             }
         }
 
-        // 7️⃣ Terraform Destroy
         stage('Terraform Destroy') {
             when { expression { params.ACTION == 'destroy' } }
             steps {
                 input message: "⚠️ Confirm DESTROY for ${params.ENV} environment?"
                 echo "🔥 Destroying Terraform-managed resources..."
-                sh "terraform destroy -auto-approve"
+                sh "terraform destroy -auto-approve -var 'environment=${params.ENV}'"
             }
         }
     }
 
-    // ---------- Post Build Actions ----------
     post {
         success {
             echo "✅ Terraform ${params.ACTION.toUpperCase()} completed successfully!"
-            cleanWs() // clean up workspace
+            cleanWs()
         }
         failure {
             echo "❌ Terraform ${params.ACTION.toUpperCase()} failed. Please check logs."
