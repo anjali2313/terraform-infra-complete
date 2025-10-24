@@ -1,16 +1,20 @@
+###############################################################
+# Placeholder outputs while ALB creation is disabled
+###############################################################
+
 output "dns_name" {
-  description = "DNS name of the ALB"
-  value       = aws_lb.app_alb.dns_name
+  description = "Placeholder for ALB DNS"
+  value       = "alb-disabled"
 }
 
 output "target_group_arn" {
-  description = "Target group ARN for ASG"
-  value       = aws_lb_target_group.app_tg.arn
+  description = "Placeholder for target group"
+  value       = "tg-disabled"
 }
 
 output "security_group_id" {
-  description = "ALB security group ID"
-  value       = aws_security_group.alb_sg.id
+  description = "Placeholder for ALB security group"
+  value       = "sg-disabled"
 }
 
 
