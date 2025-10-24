@@ -1,77 +1,53 @@
-############################################################
-# Terraform CI/CD Pipeline using Jenkins
-# - Supports: plan, apply, destroy
-# - Backend: AWS S3 + DynamoDB
-# - Parameters: Environment & Action selection
-# - Tested on Jenkins 2.528+
-############################################################
+// ============================================================
+// Terraform CI/CD Pipeline using Jenkins
+// Supports: plan, apply, destroy
+// Backend: AWS S3 + DynamoDB
+// Parameters: Environment & Action selection
+// Tested on Jenkins 2.528+
+// ============================================================
 
 pipeline {
     agent any
 
-    # Global pipeline options
+    // ---------- Pipeline Options ----------
     options {
-        timestamps()                 // Adds timestamps to logs for better tracing
-        // ansiColor('xterm')         // Optional: enable if AnsiColor plugin is installed
+        timestamps() // adds timestamps to logs for better tracing
+        // ansiColor('xterm') // optional: enable if plugin installed
     }
 
-    ############################################################
-    # Environment Variables — Jenkins credentials + constants
-    ############################################################
+    // ---------- Environment Variables ----------
     environment {
-        # AWS credentials (stored securely in Jenkins Credentials)
-        AWS_ACCESS_KEY_ID     = credentials('new-id')
-        AWS_SECRET_ACCESS_KEY = credentials('sec-key')
-
-        # AWS region
-        AWS_DEFAULT_REGION    = 'ap-northeast-1'
-
-        # Backend configuration (Terraform state & lock)
-        BACKEND_BUCKET        = 'anjali-tfstate-backend-2025'
-        BACKEND_TABLE         = 'terraform-locks'
+        AWS_ACCESS_KEY_ID     = credentials('new-id')      // Jenkins credential ID
+        AWS_SECRET_ACCESS_KEY = credentials('sec-key')     // Jenkins credential secret
+        AWS_DEFAULT_REGION    = 'ap-northeast-1'           // AWS region
+        BACKEND_BUCKET        = 'anjali-tfstate-backend-2025' // S3 backend bucket
+        BACKEND_TABLE         = 'terraform-locks'          // DynamoDB lock table
     }
 
-    ############################################################
-    # Parameters — dynamic user input during build
-    ############################################################
+    // ---------- Build Parameters ----------
     parameters {
-        choice(
-            name: 'ACTION',
-            choices: ['plan', 'apply', 'destroy'],
-            description: 'Select Terraform action to perform'
-        )
-        choice(
-            name: 'ENV',
-            choices: ['dev', 'prod'],
-            description: 'Select deployment environment (dev or prod)'
-        )
+        choice(name: 'ACTION', choices: ['plan', 'apply', 'destroy'], description: 'Select Terraform action')
+        choice(name: 'ENV', choices: ['dev', 'prod'], description: 'Select environment')
     }
 
-    ############################################################
-    # Pipeline Stages
-    ############################################################
+    // ---------- Pipeline Stages ----------
     stages {
 
-        ########################################################
-        # 1️⃣ Checkout Code
-        ########################################################
+        // 1️⃣ Checkout Code
         stage('Checkout Code') {
             steps {
                 echo "📦 Checking out repository..."
-                cleanWs()             // Clean previous workspace to avoid cache conflicts
-                checkout scm          // Pull latest code from GitHub automatically
+                cleanWs()             // clean workspace
+                checkout scm          // fetch repo from GitHub
             }
         }
 
-        ########################################################
-        # 2️⃣ Ensure Backend Exists (S3 + DynamoDB)
-        ########################################################
+        // 2️⃣ Prepare Backend (S3 + DynamoDB)
         stage('Prepare Backend') {
             steps {
                 echo "☁️ Checking and creating backend if missing..."
                 sh '''
                 set -e
-                # Check if S3 bucket exists; if not, create one
                 if ! aws s3api head-bucket --bucket $BACKEND_BUCKET 2>/dev/null; then
                     echo "🪣 Creating S3 bucket: $BACKEND_BUCKET"
                     aws s3api create-bucket --bucket $BACKEND_BUCKET \
@@ -81,7 +57,6 @@ pipeline {
                     echo "✅ S3 bucket already exists: $BACKEND_BUCKET"
                 fi
 
-                # Check if DynamoDB table exists; if not, create it
                 if ! aws dynamodb describe-table --table-name $BACKEND_TABLE 2>/dev/null; then
                     echo "🧱 Creating DynamoDB table: $BACKEND_TABLE"
                     aws dynamodb create-table \
@@ -96,9 +71,7 @@ pipeline {
             }
         }
 
-        ########################################################
-        # 3️⃣ Initialize Terraform
-        ########################################################
+        // 3️⃣ Initialize Terraform
         stage('Init Terraform') {
             steps {
                 echo "🚀 Initializing Terraform backend and modules..."
@@ -106,63 +79,50 @@ pipeline {
             }
         }
 
-        ########################################################
-        # 4️⃣ Validate Terraform Code
-        ########################################################
+        // 4️⃣ Validate Terraform
         stage('Validate Terraform') {
             steps {
-                echo "🔍 Validating Terraform configuration files..."
-                sh "terraform fmt -check"   // Checks formatting consistency
-                sh "terraform validate"     // Validates syntax and structure
+                echo "🔍 Validating Terraform configuration..."
+                sh "terraform fmt -check"
+                sh "terraform validate"
             }
         }
 
-        ########################################################
-        # 5️⃣ Terraform Plan
-        ########################################################
+        // 5️⃣ Terraform Plan
         stage('Terraform Plan') {
             when { expression { params.ACTION == 'plan' } }
             steps {
-                echo "🧩 Generating Terraform plan for environment: ${params.ENV}..."
-                # Use double quotes for Groovy interpolation
+                echo "🧩 Running Terraform plan for ${params.ENV}..."
                 sh "terraform plan -var 'environment=${params.ENV}' -out=tfplan"
             }
         }
 
-        ########################################################
-        # 6️⃣ Terraform Apply
-        ########################################################
+        // 6️⃣ Terraform Apply
         stage('Terraform Apply') {
             when { expression { params.ACTION == 'apply' } }
             steps {
-                # Manual approval before applying
-                input message: "⚠️ Approve to APPLY infrastructure in ${params.ENV}?"
+                input message: "⚠️ Approve APPLY for ${params.ENV} environment?"
                 echo "🚀 Applying Terraform changes..."
                 sh "terraform apply -auto-approve tfplan"
             }
         }
 
-        ########################################################
-        # 7️⃣ Terraform Destroy
-        ########################################################
+        // 7️⃣ Terraform Destroy
         stage('Terraform Destroy') {
             when { expression { params.ACTION == 'destroy' } }
             steps {
-                # Manual approval before destroying infrastructure
                 input message: "⚠️ Confirm DESTROY for ${params.ENV} environment?"
-                echo "🔥 Destroying all Terraform-managed resources..."
+                echo "🔥 Destroying Terraform-managed resources..."
                 sh "terraform destroy -auto-approve"
             }
         }
     }
 
-    ############################################################
-    # Post Build Actions
-    ############################################################
+    // ---------- Post Build Actions ----------
     post {
         success {
             echo "✅ Terraform ${params.ACTION.toUpperCase()} completed successfully!"
-            cleanWs()     // Clean workspace after success to save disk space
+            cleanWs() // clean up workspace
         }
         failure {
             echo "❌ Terraform ${params.ACTION.toUpperCase()} failed. Please check logs."
