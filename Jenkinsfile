@@ -99,6 +99,31 @@ pipeline {
             }
         }
 
+
+        // 8️⃣ Run Ansible to configure the EC2
+        stage('Configure EC2 with Ansible') {
+             when { expression { params.ACTION == 'apply' } }
+                 steps {
+                      echo "⚙️ Running Ansible to configure storage node..."
+                     withCredentials([file(credentialsId: 'ec2-key', variable: 'EC2_KEY')]) {
+                      sh '''
+                           set -e
+                          cd ansible
+
+                          # CI convenience: don’t prompt for SSH host key
+                          export ANSIBLE_HOST_KEY_CHECKING=False
+
+                          echo "🔎 Quick connectivity test..."
+                         ansible -i inventory.ini all -m ping --private-key "$EC2_KEY"
+
+                          echo "▶️ Running playbook..."
+                          ansible-playbook -i inventory.ini playbook.yml --private-key "$EC2_KEY"
+      '''
+                     }
+              }
+            }
+
+
         stage('Terraform Destroy') {
             when { expression { params.ACTION == 'destroy' } }
             steps {
